@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Calculator Icon Generator</title>
+</head>
+
+<body>
+    <h1>Calculator App Icons</h1>
+    <p>아래 아이콘을 우클릭하여 각 크기별로 저장하세요.</p>
+
+    <!-- 72x72 -->
+    <h3>72x72</h3>
+    <canvas id="icon-72" width="72" height="72"></canvas>
+    <br><button onclick="downloadIcon('icon-72', 'icon-72x72.png')">다운로드</button>
+
+    <!-- 96x96 -->
+    <h3>96x96</h3>
+    <canvas id="icon-96" width="96" height="96"></canvas>
+    <br><button onclick="downloadIcon('icon-96', 'icon-96x96.png')">다운로드</button>
+
+    <!-- 128x128 -->
+    <h3>128x128</h3>
+    <canvas id="icon-128" width="128" height="128"></canvas>
+    <br><button onclick="downloadIcon('icon-128', 'icon-128x128.png')">다운로드</button>
+
+    <!-- 144x144 -->
+    <h3>144x144</h3>
+    <canvas id="icon-144" width="144" height="144"></canvas>
+    <br><button onclick="downloadIcon('icon-144', 'icon-144x144.png')">다운로드</button>
+
+    <!-- 152x152 -->
+    <h3>152x152</h3>
+    <canvas id="icon-152" width="152" height="152"></canvas>
+    <br><button onclick="downloadIcon('icon-152', 'icon-152x152.png')">다운로드</button>
+
+    <!-- 192x192 -->
+    <h3>192x192</h3>
+    <canvas id="icon-192" width="192" height="192"></canvas>
+    <br><button onclick="downloadIcon('icon-192', 'icon-192x192.png')">다운로드</button>
+
+    <!-- 384x384 -->
+    <h3>384x384</h3>
+    <canvas id="icon-384" width="384" height="384"></canvas>
+    <br><button onclick="downloadIcon('icon-384', 'icon-384x384.png')">다운로드</button>
+
+    <!-- 512x512 -->
+    <h3>512x512</h3>
+    <canvas id="icon-512" width="512" height="512"></canvas>
+    <br><button onclick="downloadIcon('icon-512', 'icon-512x512.png')">다운로드</button>
+
+    <script>
+        function drawIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            // 그라디언트 배경
+            const gradient = ctx.createLinearGradient(0, 0, 0, size);
+            gradient.addColorStop(0, '#137fec');
+            gradient.addColorStop(1, '#0a4d8f');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // 계산기 모양 그리기
+            const padding = size * 0.15;
+            const calcWidth = size - (padding * 2);
+            const calcHeight = size - (padding * 2);
+
+            // 계산기 외곽
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.roundRect(padding, padding, calcWidth, calcHeight, size * 0.08);
+            ctx.fill();
+
+            // 디스플레이
+            const displayHeight = calcHeight * 0.25;
+            ctx.fillStyle = '#1e252d';
+            ctx.roundRect(
+                padding + calcWidth * 0.1,
+                padding + calcHeight * 0.1,
+                calcWidth * 0.8,
+                displayHeight,
+                size * 0.04
+            );
+            ctx.fill();
+
+            // 버튼 그리드
+            const buttonStartY = padding + calcHeight * 0.1 + displayHeight + calcHeight * 0.1;
+            const buttonAreaHeight = calcHeight - displayHeight - (calcHeight * 0.3);
+            const buttonSize = calcWidth * 0.18;
+            const buttonGap = calcWidth * 0.025;
+
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const x = padding + calcWidth * 0.1 + col * (buttonSize + buttonGap);
+                    const y = buttonStartY + row * (buttonSize + buttonGap);
+
+                    ctx.fillStyle = '#283039';
+                    ctx.roundRect(x, y, buttonSize, buttonSize, size * 0.03);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // 모든 아이콘 그리기
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        sizes.forEach(size => {
+            drawIcon(`icon-${size}`, size);
+        });
+    </script>
+</body>
+
+</html>
