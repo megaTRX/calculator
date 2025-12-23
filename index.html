@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html class="dark" lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="description" content="TDD와 SOLID 원칙으로 구축한 현대적인 공학용 계산기" />
+    <title>공학용 계산기 | Scientific Calculator</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1c242d",
+                        "key-num": "#1e252d",
+                        "key-op": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+
+        /* 결과 애니메이션 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-animation {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display h-[100dvh] w-full flex flex-col overflow-hidden relative">
+
+    <!-- Top Navigation / Header -->
+    <div class="flex items-center p-4 justify-between shrink-0 z-10 w-full">
+        <!-- Menu Icon -->
+        <button id="menuBtn" aria-label="메뉴 열기"
+            class="text-white/70 hover:text-white flex size-10 items-center justify-center rounded-full active:bg-white/10 transition-colors">
+            <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+
+        <!-- Mode Switcher -->
+        <div class="flex items-center bg-surface-dark rounded-full p-1 border border-white/5 shadow-inner">
+            <button id="calcModeBtn"
+                class="px-5 py-1.5 rounded-full bg-primary text-white text-xs font-bold tracking-wide shadow-md transition-all">
+                CALC
+            </button>
+            <button id="unitModeBtn"
+                class="px-5 py-1.5 rounded-full text-white/50 hover:text-white text-xs font-bold tracking-wide transition-colors">
+                UNIT
+            </button>
+        </div>
+
+        <!-- History Icon -->
+        <button id="historyBtn" aria-label="계산 히스토리"
+            class="text-white/70 hover:text-white flex size-10 items-center justify-center rounded-full active:bg-white/10 transition-colors">
+            <span class="material-symbols-outlined text-[24px]">history</span>
+        </button>
+    </div>
+
+    <!-- Display Area -->
+    <div class="flex flex-col justify-end items-end px-6 pb-2 pt-0 flex-1 shrink min-h-0 w-full overflow-hidden">
+        <!-- History/Equation View -->
+        <div class="w-full text-right overflow-hidden mb-1">
+            <h2 id="expressionDisplay"
+                class="text-white/40 text-xl md:text-2xl font-medium tracking-wide truncate opacity-80" role="status"
+                aria-live="polite">
+                0
+            </h2>
+        </div>
+
+        <!-- Main Result View -->
+        <div class="w-full text-right">
+            <h1 id="resultDisplay"
+                class="text-white text-[56px] md:text-[64px] font-bold leading-none tracking-tight break-all drop-shadow-sm result-animation"
+                role="status" aria-live="assertive" aria-atomic="true">
+                0
+            </h1>
+        </div>
+    </div>
+
+    <!-- Middle Control Bar (Chips) -->
+    <div class="flex justify-between items-center px-5 pb-4 w-full shrink-0">
+        <div class="flex gap-3">
+            <button id="degBtn" data-mode="DEG" aria-label="도 모드" aria-pressed="true"
+                class="flex h-8 px-4 items-center justify-center gap-x-1 rounded-lg bg-surface-dark border border-white/5 hover:border-primary/50 text-[11px] font-bold text-primary tracking-widest transition-all">
+                DEG
+            </button>
+            <button id="radBtn" data-mode="RAD" aria-label="라디안 모드" aria-pressed="false"
+                class="flex h-8 px-4 items-center justify-center gap-x-1 rounded-lg bg-transparent hover:bg-white/5 text-white/40 text-[11px] font-bold tracking-widest hover:text-white/80 transition-all">
+                RAD
+            </button>
+        </div>
+
+        <!-- Backspace Button -->
+        <button id="backspaceBtn" aria-label="지우기"
+            class="flex h-10 w-12 items-center justify-center text-primary hover:text-white active:scale-90 transition-all">
+            <span class="material-symbols-outlined text-[26px]">backspace</span>
+        </button>
+    </div>
+
+    <!-- Keypad Container -->
+    <div
+        class="bg-surface-dark dark:bg-[#151e27] rounded-t-3xl p-4 md:p-6 pb-8 flex flex-col justify-end shadow-[0_-8px_30px_rgba(0,0,0,0.4)] border-t border-white/5 z-20 w-full h-auto">
+
+        <!-- Scientific Keys Row -->
+        <div class="grid grid-cols-5 gap-3 mb-4 w-full">
+            <button data-function="sin" aria-label="사인"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">sin</button>
+            <button data-function="cos" aria-label="코사인"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">cos</button>
+            <button data-function="tan" aria-label="탄젠트"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">tan</button>
+            <button data-function="pi" aria-label="파이"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">π</button>
+            <button data-function="sqrt" aria-label="제곱근"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">√</button>
+
+            <button data-function="ln" aria-label="자연로그"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">ln</button>
+            <button data-function="log" aria-label="로그"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">log</button>
+            <button data-function="e" aria-label="자연상수 e"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">e</button>
+            <button data-value="(" aria-label="왼쪽 괄호"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">(</button>
+            <button data-value=")" aria-label="오른쪽 괄호"
+                class="h-10 md:h-12 rounded-lg bg-key-op/40 hover:bg-primary/20 hover:text-primary text-white/80 text-sm font-semibold transition-colors">)</button>
+        </div>
+
+        <!-- Divider -->
+        <div class="h-px bg-white/5 w-full mb-4"></div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-4 gap-3 md:gap-4 w-full h-full">
+            <!-- Row 1 -->
+            <button id="clearBtn" aria-label="전체 지우기"
+                class="h-16 md:h-20 rounded-2xl bg-key-op hover:bg-[#343e4a] text-primary text-xl font-bold transition-all active:scale-95">AC</button>
+            <button data-operator="%" aria-label="백분율"
+                class="h-16 md:h-20 rounded-2xl bg-key-op hover:bg-[#343e4a] text-primary text-xl font-bold transition-all active:scale-95">%</button>
+            <button data-operator="/" aria-label="나누기"
+                class="h-16 md:h-20 rounded-2xl bg-key-op hover:bg-[#343e4a] text-primary text-2xl font-bold transition-all active:scale-95">÷</button>
+            <button data-operator="*" aria-label="곱하기"
+                class="h-16 md:h-20 rounded-2xl bg-key-op hover:bg-[#343e4a] text-primary text-2xl font-bold transition-all active:scale-95">×</button>
+
+            <!-- Row 2 -->
+            <button data-number="7" aria-label="7"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">7</button>
+            <button data-number="8" aria-label="8"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">8</button>
+            <button data-number="9" aria-label="9"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">9</button>
+            <button data-operator="-" aria-label="빼기"
+                class="h-16 md:h-20 rounded-2xl bg-key-op hover:bg-[#343e4a] text-primary text-3xl font-bold transition-all active:scale-95">−</button>
+
+            <!-- Row 3 -->
+            <button data-number="4" aria-label="4"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">4</button>
+            <button data-number="5" aria-label="5"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">5</button>
+            <button data-number="6" aria-label="6"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">6</button>
+            <button data-operator="+" aria-label="더하기"
+                class="h-16 md:h-20 rounded-2xl bg-key-op hover:bg-[#343e4a] text-primary text-3xl font-bold transition-all active:scale-95">+</button>
+
+            <!-- Row 4 -->
+            <button data-number="1" aria-label="1"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">1</button>
+            <button data-number="2" aria-label="2"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">2</button>
+            <button data-number="3" aria-label="3"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">3</button>
+
+            <!-- Equals Button (Spanning 2 rows vertically) -->
+            <button id="equalsBtn" aria-label="계산하기"
+                class="row-span-2 h-full rounded-2xl bg-primary hover:bg-[#116ecf] text-white text-3xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/25 flex items-center justify-center relative overflow-hidden group">
+                <span class="relative z-10">=</span>
+                <div
+                    class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                </div>
+            </button>
+
+            <!-- Row 5 -->
+            <button data-number="0" aria-label="0"
+                class="col-span-2 h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-medium transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)] text-left pl-8">0</button>
+            <button data-value="." aria-label="소수점"
+                class="h-16 md:h-20 rounded-2xl bg-key-num hover:bg-[#2c3540] text-white text-2xl font-bold transition-all active:scale-95 shadow-[0_2px_0_rgba(0,0,0,0.2)]">.</button>
+        </div>
+    </div>
+
+    <!-- Decorative background elements -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+        <div class="absolute -top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[100px]"></div>
+        <div class="absolute top-[10%] left-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/5 blur-[80px]"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="src/js/app.js"></script>
+</body>
+
+</html>
